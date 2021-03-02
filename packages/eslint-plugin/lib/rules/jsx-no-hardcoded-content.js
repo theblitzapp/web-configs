@@ -12,6 +12,31 @@ const defaultDOMOptions = {
   input: {checkProps: ['title', 'alt', 'placeholder', 'aria-label']},
 };
 
+/*
+  NOTE:
+  I REALLY REALLY HATE TO DO THIS BUT IT WORKS SO IDC
+  i think 🙃
+*/
+function getElementNames(node, context, _elements = []) {
+  const elements = _elements;
+
+  if (node.openingElement && node.openingElement.name) {
+    elements.push(context.getSourceCode().getText(node.openingElement.name));
+  }
+
+  if (node.parent) {
+    if (node.parent.openingElement && node.parent.openingElement.name) {
+      elements.push(
+        context.getSourceCode().getText(node.parent.openingElement.name),
+      );
+    }
+
+    getElementNames(node.parent, context, elements);
+  }
+
+  return elements;
+}
+
 module.exports = {
   meta: {
     docs: {
@@ -128,6 +153,11 @@ module.exports = {
         if (check.valid) {
           return;
         }
+
+        const elementNames = getElementNames(node, context);
+        const whitelistedElementNames = ['Trans'];
+
+        if (elementNames.some((element) => whitelistedElementNames.includes(element))) return;
 
         const elementName = context
           .getSourceCode()
